@@ -1,3 +1,3 @@
 Manifest-Version: 1.0
-Main-Class: com.luoboduner.wesync.App
+Main-Class: com.xinyu.vivotool.App
 

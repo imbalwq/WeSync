@@ -1,41 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<weSync> 
-  <status> 
-    <lastSyncTime>2016-05-27 09:53:00</lastSyncTime>  
-    <lastKeepTime>10.125</lastKeepTime>  
-    <successTime>35</successTime>  
-    <failTime>11</failTime> 
-  </status>  
-  <database> 
-    <from> 
-      <type>SQL Server</type>  
-      <host>127.0.0.1</host>  
-      <name>TEST_2017</name>  
-      <user/>  
-      <password/> 
-    </from>  
-    <to> 
-      <type>MySQL</type>  
-      <host>localhost</host>  
-      <name>TEST_2017_M</name>  
-      <user/>  
-      <password/> 
-    </to> 
-  </database>  
-  <schedule> 
-    <radio>false,false,false,false,false,false,true</radio>  
-    <fixtime>23:45:00</fixtime> 
-  </schedule>  
-  <backup/>  
+<vivo> 
   <setting> 
     <autoBak>true</autoBak>  
+    <mysqlPath>C:\Users\Administrator\Desktop\test\test11</mysqlPath>  
     <debugMode>false</debugMode>  
-    <strictMode>false</strictMode>  
-    <mysqlPath>C:\Users\Administrator\Desktop\test5\</mysqlPath>  
-    <productname>产品A,产品B</productname> 
-  </setting>  
-  <increase> 
-    <POSITION_CODE>0</POSITION_CODE> 
-  </increase> 
-</weSync>
+    <cbxSplitDataInput>true</cbxSplitDataInput>  
+    <splitDataInputForder>C:\Users\Administrator\Desktop\vivo\1、原始文件</splitDataInputForder>  
+    <cbxSplitDataOutput>true</cbxSplitDataOutput>  
+    <splitDataOutputForder>C:\Users\Administrator\Desktop\vivo\2、译前处理结果</splitDataOutputForder>  
+    <cbxMergeDataInput>true</cbxMergeDataInput>  
+    <mergeDataInputForder>C:\Users\Administrator\Desktop\vivo\3、译后回稿</mergeDataInputForder>  
+    <cbxMergeDataOutput>true</cbxMergeDataOutput>  
+    <mergeDataOutputForder>C:\Users\Administrator\Desktop\vivo\4、译后处理结果</mergeDataOutputForder> 
+  </setting> 
+</vivo>
