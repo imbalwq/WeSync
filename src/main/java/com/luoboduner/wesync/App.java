@@ -3,6 +3,7 @@ package com.luoboduner.wesync;
 import com.luoboduner.wesync.ui.UiConsts;
 import com.luoboduner.wesync.ui.dialog.DbBackUpCreateDialog;
 import com.luoboduner.wesync.ui.panel.*;
+import com.luoboduner.wesync.vivo.bean.FactorTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.luoboduner.wesync.tools.PropertyUtil;
@@ -13,6 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.List;
 
 /**
  * 程序入口，主窗口Frame
@@ -35,6 +37,8 @@ public class App {
      */
     public static DbBackUpCreateDialog dbBackUpCreateDialog;
 
+    public static List<FactorTemplate> factorTemplateList;
+
     /**
      * 程序入口main
      */
@@ -42,11 +46,12 @@ public class App {
 //        EventQueue.invokeLater(() -> {
             try {
                 App window = new App();
-                window.initialize();
+                //window.initialize();
 //                StatusPanel.buttonStartSchedule.doClick();
                 window.frame.setVisible(true);
 
             } catch (Exception e) {
+                logger.error("程序入口main initialize error",e);
                 e.printStackTrace();
             }
 //        });

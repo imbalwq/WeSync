@@ -66,16 +66,22 @@ public class ExecuteThread extends Thread  {
 //            String newFolderPath="C:\\Users\\Administrator\\Desktop\\temp\\zhaoxiaoling\\vivo LogReport\\tmp\\vivo report.xlsx";
 
             //TODO 读取模板文件并 写入到新的位置
-            String templatePath= UiConsts.CURRENT_DIR + File.separator + "config" + File.separator + "vivoReportTemplate.xlsx";
+            String templatePath= UiConsts.CURRENT_DIR + File.separator + "config" + File.separator + "reportTemplate.xlsx";
             System.out.println("templatePath:"+templatePath);
             File reportTemplate = new File(templatePath);
 
             Date now = new Date();
 
+            String reportName="error.xlsx";
+            if(StatusPanel.buttonSelectValue==0){
+                reportName="vivo report.xlsx";
+            }else if(StatusPanel.buttonSelectValue==1){
+                reportName="log report.xlsx";
+            }
             if(outputForder.trim().lastIndexOf("\\")==outputForder.trim().length()-1){
-                outputForder=outputForder.substring(0,outputForder.length()-1)+"\\"+"vivo report.xlsx";
+                outputForder=outputForder.substring(0,outputForder.length()-1)+"\\"+reportName;
             }else{
-                outputForder=outputForder.substring(0,outputForder.length())+"\\"+"vivo report.xlsx";
+                outputForder=outputForder.substring(0,outputForder.length())+"\\"+reportName;
             }
 
 //            LogReport.generateQuotationSheet(reportTemplate,reportFolder,newFolderPath,isUseFileNameSuffix);
@@ -84,6 +90,7 @@ public class ExecuteThread extends Thread  {
             StatusPanel.labelStatusDetail.setText("详情："+msg);
         } catch (Exception e) {
             isexception=true;
+            logger.error("线程运行中异常：",e);
             e.printStackTrace();
         }
 

@@ -3,6 +3,7 @@ package com.luoboduner.wesync.vivo;
 import com.luoboduner.wesync.App;
 import com.luoboduner.wesync.ui.UiConsts;
 import com.luoboduner.wesync.ui.panel.StatusPanel;
+import com.luoboduner.wesync.vivo.bean.FactorTemplate;
 import com.luoboduner.wesync.vivo.bean.VivoReportExcel;
 import com.luoboduner.wesync.vivo.bean.VivoReportRowData;
 import com.luoboduner.wesync.vivo.util.FileUtil;
@@ -17,12 +18,11 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ import java.util.List;
  * @description 字数分析报告采集，根据 trados 导出的分析报告格式做采集
  */
 public class LogReport {
-
+    private static final Logger logger = LoggerFactory.getLogger(LogReport.class);
     private static FormulaEvaluator evaluator;
 
     public static void main(String[] args) throws  Exception{
@@ -113,7 +113,8 @@ public class LogReport {
                     .append(fileList.size()).append("】个")
                     .append("解析的记录【").append(i).append("】条");
         } catch (Exception e) {
-            msg.append("处理异常请联系开发人并提供详细日志！");
+            msg.append("处理异常可联系工程部同事并提供详细日志！");
+            logger.error("未处理的异常",e);
             e.printStackTrace();
         }
 
@@ -192,6 +193,7 @@ public class LogReport {
         int wordsIndex_X=3;
         int typeIndex=1;
         int languageCode=0;     // 0:英语报表  1：中文报表
+        boolean hasLocked=false;
         String targetLanguage="";
         VivoReportRowData vivoReportRowData=null;
         boolean restart=false;  //标志是否开始 新建对象，开始记录新文件的值
@@ -218,6 +220,12 @@ public class LogReport {
 //                for(int c=0;c<row.getLastCellNum();c++){
                     String wordTypeValue=getCellValueByCell(row.getCell(typeIndex));
                     String words=getCellValueByCell(row.getCell(wordsIndex_X));
+                    //TODO 20250320 traods报告中 如果选择了 “将锁定句段报告列为单独类别” 则需要重新定位文件名对应的位置
+                    //当前判断方式依赖于 特殊标识在 报告中的顺序 位置，以及当前代码遍历的顺序
+                 if("Locked".equalsIgnoreCase(wordTypeValue) || "已锁定".equalsIgnoreCase(wordTypeValue) ){
+                     hasLocked=true;
+                 }
+
                 if("PerfectMatch".equalsIgnoreCase(wordTypeValue)){
                     //如果不是第一次，则将前一个文件先添加
                     if(vivoReportRowData!=null){
@@ -228,14 +236,30 @@ public class LogReport {
                     vivoReportRowData.setReportFileName(file.getName());
                     vivoReportRowData.setTargetLanguage(targetLanguage);
                     String sdlfilename="";
-                    if(getCellValueByCell(row.getCell(fileNameIndex_X)).indexOf("\\")!=-1){
-                        sdlfilename=getCellValueByCell(row.getCell(fileNameIndex_X));
-                        sdlfilename=sdlfilename.substring(sdlfilename.lastIndexOf("\\")+1);
+                    //是否有单独列出锁定列 会影响文件名的位置 (Locked)
+                    if(hasLocked){
+                        XSSFRow previousRow = sheetTemp.getRow(i-1);
+                        //没有单独列出锁定句段的情况
+                        if(getCellValueByCell(previousRow.getCell(fileNameIndex_X)).indexOf("\\")!=-1){
+                            sdlfilename=getCellValueByCell(previousRow.getCell(fileNameIndex_X));
+                            sdlfilename=sdlfilename.substring(sdlfilename.lastIndexOf("\\")+1);
+                        }else{
+                            sdlfilename=getCellValueByCell(previousRow.getCell(fileNameIndex_X));
+                        }
+                        sdlfilename=sdlfilename.replace(".sdlxliff","");
                     }else{
-                        sdlfilename=getCellValueByCell(row.getCell(fileNameIndex_X));
+                        //没有单独列出锁定句段的情况
+                        if(getCellValueByCell(row.getCell(fileNameIndex_X)).indexOf("\\")!=-1){
+                            sdlfilename=getCellValueByCell(row.getCell(fileNameIndex_X));
+                            sdlfilename=sdlfilename.substring(sdlfilename.lastIndexOf("\\")+1);
+                        }else{
+                            sdlfilename=getCellValueByCell(row.getCell(fileNameIndex_X));
+                        }
+                        sdlfilename=sdlfilename.replace(".sdlxliff","");
                     }
-                    sdlfilename=sdlfilename.replace(".sdlxliff","");
                     vivoReportRowData.setSdlxliffFileName(sdlfilename);
+                    vivoReportRowData.setMatching_PerfectMatch(Integer.valueOf(words));
+                    System.out.println(words);
                 }
                 if("Context Match".equalsIgnoreCase(wordTypeValue) || "上下文匹配".equalsIgnoreCase(wordTypeValue)){
                     vivoReportRowData.setMatching_100locked(Integer.valueOf(words));
@@ -276,7 +300,7 @@ public class LogReport {
 
 
     /**
-     *
+     * 生成报价单
      * @param templateFiel 模板内置在 config目录下
      * @param reportFolder trados 报告目录文件夹
      * @param newFolderPath 字数汇总文件输出目录
@@ -321,6 +345,38 @@ public class LogReport {
             StatusPanel.progressCurrent.setMaximum(rowDataList.size());
             StatusPanel.progressCurrent.setValue(0);
         }
+
+        //TODO 设置 Excel中不同匹配率的折算系数 start
+        /**
+         * 	折算比例
+         * p2	PerfectMatch	50%
+         * p3	Context Match	0%
+         * p4	Repetitions	20%
+         * p5	Cross-file Repetitions	20%
+         * p6	100%	20%
+         * p7	95% - 99%	20%
+         * p8	85% - 94%	40%
+         * p9	75% - 84%	40%
+         * p10	50% - 74%	100%
+         * p11	New/AT	100%
+         * p12	AdaptiveMT Baseline	0%
+         * p13	AdaptiveMT with Learnings	0%
+         */
+        //当前选择的折算方案：
+        FactorTemplate ft=(FactorTemplate)StatusPanel.comboBox.getSelectedItem();
+        //P2
+        sheetTemp.getRow(0).getCell(12).setCellValue("折算方案："+ft.getCustomerName());
+        sheetTemp.getRow(1).getCell(13).setCellValue(ft.getContextMatch());
+        sheetTemp.getRow(2).getCell(13).setCellValue(ft.getRepetitions());
+        sheetTemp.getRow(3).getCell(13).setCellValue(ft.getMatch_100());
+        sheetTemp.getRow(4).getCell(13).setCellValue(ft.getMatch_95_99());
+        sheetTemp.getRow(5).getCell(13).setCellValue(ft.getMatch_85_94());
+        sheetTemp.getRow(6).getCell(13).setCellValue(ft.getMatch_75_84());
+        sheetTemp.getRow(7).getCell(13).setCellValue(ft.getMatch_50_74());
+        sheetTemp.getRow(8).getCell(13).setCellValue(ft.getMatch_new());
+
+
+        //TODO 设置 Excel中不同匹配率的折算系数 end
 //        for (File file : fileList) {
 //            List<VivoReportRowData> rowDataList=readyVivoExcelReportData(file);
             for (VivoReportRowData vivoReportRowData : rowDataList) {
@@ -338,7 +394,8 @@ public class LogReport {
                     targetLanguage=vivoReportRowData.getTargetLanguage();
                 }
 
-                rowDataStr.append(vivoReportRowData.getMatching_100locked()).append("\t")
+                rowDataStr.append(vivoReportRowData.getMatching_PerfectMatch()).append("\t")
+                        .append(vivoReportRowData.getMatching_100locked()).append("\t")
                         .append(vivoReportRowData.getMatching_Repetitions()).append("\t")
                         .append(vivoReportRowData.getMatching_CrossFileRepetitions()).append("\t")
                         .append(vivoReportRowData.getMatching_100()).append("\t")
@@ -355,11 +412,8 @@ public class LogReport {
 
                 //记录L和 M列的公式
                 int viewStartRowNum=startRowNum+1;
-                String calc="C"+viewStartRowNum+"*0+D"+viewStartRowNum+"*0.2+E"+viewStartRowNum+"*0.2+F"+viewStartRowNum+
-                        "*0.2+G"+viewStartRowNum+"*0.2+H"+viewStartRowNum+"*0.4+I"+viewStartRowNum+"*0.4+J"+viewStartRowNum+"+K"+viewStartRowNum;
-                String calc2="C"+viewStartRowNum+"*0.2+D"+viewStartRowNum+"*0.2+E"+viewStartRowNum+"*0.2+F"+viewStartRowNum+
-                        "*0.2+G"+viewStartRowNum+"*0.2+H"+viewStartRowNum+"*0.4+I"+viewStartRowNum+"*0.4+J"+viewStartRowNum+"+K"+viewStartRowNum;
-
+                String calc="C"+viewStartRowNum+"*N2+D"+viewStartRowNum+"*N3+E"+viewStartRowNum+"*N4+F"+viewStartRowNum+
+                        "*N5+G"+viewStartRowNum+"*N6+H"+viewStartRowNum+"*N7+I"+viewStartRowNum+"*N8+J"+viewStartRowNum+"*N9";
 
                 //模板预置了 30行空行， 31行为合并汇总行，所以30行之前只赋值，30行往后插入行处理 保留最后的汇总行
                 Row row=null;
@@ -371,20 +425,20 @@ public class LogReport {
                     row = sheetTemp.getRow(startRowNum);
                 }
 
+                // C_ContextMath=PerfectMatch + ContextMath
+                int contextMath=vivoReportRowData.getMatching_PerfectMatch()+vivoReportRowData.getMatching_100locked();
+                int repetitions=vivoReportRowData.getMatching_Repetitions()+vivoReportRowData.getMatching_CrossFileRepetitions();
                 row.createCell(VivoReportExcel.A_XliffFileName).setCellValue(sdlfilename);
                 row.createCell(VivoReportExcel.B_TargetLanguage).setCellValue(targetLanguage);
-                row.createCell(VivoReportExcel.C_ContextMath).setCellValue(vivoReportRowData.getMatching_100locked());
-                row.createCell(VivoReportExcel.D_Repetitions).setCellValue(vivoReportRowData.getMatching_Repetitions());
-                row.createCell(VivoReportExcel.E_CrossFileRepetitions).setCellValue(vivoReportRowData.getMatching_CrossFileRepetitions());
-                row.createCell(VivoReportExcel.F_100).setCellValue(vivoReportRowData.getMatching_100());
-                row.createCell(VivoReportExcel.G_95_99).setCellValue(vivoReportRowData.getMatching_95_99());
-                row.createCell(VivoReportExcel.H_85_94).setCellValue(vivoReportRowData.getMatching_85_94());
-                row.createCell(VivoReportExcel.I_75_84).setCellValue(vivoReportRowData.getMatching_75_84());
-                row.createCell(VivoReportExcel.J_50_74).setCellValue(vivoReportRowData.getMatching_50_74());
-                row.createCell(VivoReportExcel.K_New_AT).setCellValue(vivoReportRowData.getMatching_New());
-                row.createCell(VivoReportExcel.L_Calc_1).setCellFormula(calc);
-                row.createCell(VivoReportExcel.M_Calc_1).setCellFormula(calc2);
-
+                row.createCell(VivoReportExcel.C_ContextMath).setCellValue(contextMath);
+                row.createCell(VivoReportExcel.D_Repetitions).setCellValue(repetitions);
+                row.createCell(VivoReportExcel.E_100).setCellValue(vivoReportRowData.getMatching_100());
+                row.createCell(VivoReportExcel.F_95_99).setCellValue(vivoReportRowData.getMatching_95_99());
+                row.createCell(VivoReportExcel.G_85_94).setCellValue(vivoReportRowData.getMatching_85_94());
+                row.createCell(VivoReportExcel.H_75_84).setCellValue(vivoReportRowData.getMatching_75_84());
+                row.createCell(VivoReportExcel.I_50_74).setCellValue(vivoReportRowData.getMatching_50_74());
+                row.createCell(VivoReportExcel.J_New_AT).setCellValue(vivoReportRowData.getMatching_New());
+                row.createCell(VivoReportExcel.K_Calc).setCellFormula(calc);
 
                 //TODO 插入具体数据
                 i++;
@@ -413,7 +467,14 @@ public class LogReport {
         File dir=new File(newFolderPath.substring(0,newFolderPath.lastIndexOf("\\")));
         dir.mkdirs();
         //进行存储
-        FileOutputStream excelFileOutPutStream = new FileOutputStream(newFolderPath);
+
+        FileOutputStream excelFileOutPutStream = null;
+        try {
+            excelFileOutPutStream = new FileOutputStream(newFolderPath);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            System.err.println(e.getMessage());
+        }
         // 将最新的 Excel 文件写入到文件输出流中，更新文件信息！
         workbookTemp.write(excelFileOutPutStream);
         // 执行 flush 操作， 将缓存区内的信息更新到文件上

@@ -17,7 +17,7 @@ public class UiConsts {
      * 软件名称,版本
      */
     public final static String APP_NAME = "新宇tool";
-    public final static String APP_VERSION = "v_1.00_02";
+    public final static String APP_VERSION = "v_1.00_05";
 
     /**
      * 主窗口大小

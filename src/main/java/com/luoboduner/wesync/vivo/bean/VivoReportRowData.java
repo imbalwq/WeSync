@@ -48,6 +48,11 @@ public class VivoReportRowData {
      */
     public Integer matching_Repetitions;
     public Integer matching_CrossFileRepetitions;
+    /**
+     * 对应 report里 PerfectMatch
+     */
+    public Integer matching_PerfectMatch;
+
     public Double unitPrice;
     public String lspProject;
     public String lsp;
@@ -248,5 +253,13 @@ public class VivoReportRowData {
 
     public void setFile(File file) {
         this.file = file;
+    }
+
+    public Integer getMatching_PerfectMatch() {
+        return matching_PerfectMatch;
+    }
+
+    public void setMatching_PerfectMatch(Integer matching_PerfectMatch) {
+        this.matching_PerfectMatch = matching_PerfectMatch;
     }
 }

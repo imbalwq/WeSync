@@ -167,4 +167,19 @@ public class Utils {
 
         return -1;
     }
+
+    //合并二维数组
+    public static String[][] mergeArrays(String[][] arr1, String[][] arr2) {
+        int rows1 = (arr1 != null) ? arr1.length : 0;
+        int rows2 = (arr2 != null) ? arr2.length : 0;
+
+        String[][] result = new String[rows1 + rows2][];
+        if (arr1 != null) {
+            System.arraycopy(arr1, 0, result, 0, rows1);
+        }
+        if (arr2 != null) {
+            System.arraycopy(arr2, 0, result, rows1, rows2);
+        }
+        return result;
+    }
 }

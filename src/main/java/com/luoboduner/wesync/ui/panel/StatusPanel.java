@@ -2,27 +2,27 @@ package com.luoboduner.wesync.ui.panel;
 
 import com.luoboduner.wesync.App;
 import com.luoboduner.wesync.tools.ConstantsTools;
+import com.luoboduner.wesync.tools.ExcelRead;
 import com.luoboduner.wesync.ui.UiConsts;
 import com.luoboduner.wesync.ui.component.MyIconButton;
 import com.luoboduner.wesync.logic.ExecuteThread;
+import com.luoboduner.wesync.vivo.bean.FactorTemplate;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.luoboduner.wesync.tools.PropertyUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -64,6 +64,14 @@ public class StatusPanel extends JPanel {
     private static ScheduledExecutorService service;
 
     public static boolean isRunning = false;
+    //头部
+    public static JLabel labelTitle;
+
+    /**
+     * JComboBox<FactorTemplate> comboBox
+     */
+
+    public static JComboBox<FactorTemplate> comboBox;
 
     /**
      * 构造
@@ -104,7 +112,7 @@ public class StatusPanel extends JPanel {
         panelUp.setBackground(UiConsts.MAIN_BACK_COLOR);
         panelUp.setLayout(new FlowLayout(FlowLayout.LEFT, UiConsts.MAIN_H_GAP, 5));
 
-        JLabel labelTitle = new JLabel("Vivo log 汇总");
+        labelTitle = new JLabel("Trados Log 汇总");
         labelTitle.setFont(UiConsts.FONT_TITLE);
         labelTitle.setForeground(UiConsts.TOOL_BAR_BACK_COLOR);
         panelUp.add(labelTitle);
@@ -291,7 +299,8 @@ public class StatusPanel extends JPanel {
     private JPanel getDownPanel() {
         JPanel panelDown = new JPanel();
         panelDown.setBackground(UiConsts.MAIN_BACK_COLOR);
-        panelDown.setLayout(new GridLayout(1, 2));
+        panelDown.setLayout(new BoxLayout(panelDown, BoxLayout.X_AXIS));
+//        panelDown.setLayout(new GridLayout(1, 2));
         JPanel panelGrid1 = new JPanel();
         panelGrid1.setBackground(UiConsts.MAIN_BACK_COLOR);
         panelGrid1.setLayout(new FlowLayout(FlowLayout.LEFT, UiConsts.MAIN_H_GAP, 15));
@@ -316,14 +325,102 @@ public class StatusPanel extends JPanel {
 
         JPanel radioButtonPanel = new JPanel();
         radioButtonPanel.setBackground(UiConsts.MAIN_BACK_COLOR);
-        radioButtonPanel.setPreferredSize(new Dimension(70, 5));
-        radioButtonPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        radioButtonPanel.setPreferredSize(new Dimension(200, 30));
+//        radioButtonPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));
         buttonGroup=new ButtonGroup();
-        addRadioButton("Vivo线上报告",0,radioButtonPanel);
+        StatusPanel.buttonSelectValue=1;
         addRadioButton("常规Trados报告",1,radioButtonPanel);
+        addRadioButton("Vivo线上报告",0,radioButtonPanel);
+
+
+        String factorTemplate= UiConsts.CURRENT_DIR + File.separator + "config" + File.separator + "factorTemplate.xlsx";
+        String custFactorTemplate= UiConsts.CURRENT_DIR + File.separator + "config" + File.separator + "custFactorTemplate.xlsx";
+
+        String factorData[][]= null;
+        String custFactorData [][]=null;
+        List<FactorTemplate> factorTemplateList = new ArrayList<>();
+        try {
+            factorData =ExcelRead.readExcelData(factorTemplate);
+            custFactorData=ExcelRead.readExcelData(custFactorTemplate);
+        }catch (Exception e){
+            logger.error("加载折算比例数据异常",e);
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(App.statusPanel, "加载折算比例数据异常:"+e.getMessage());
+        }
+
+
+        for(int i = 2; i< factorData.length; i++){
+            if(StringUtils.isNotEmpty(factorData[i][0])){
+                FactorTemplate ft=new FactorTemplate();
+                ft.setCustomerName(factorData[i][0]);
+                ft.setContextMatch(Double.valueOf(factorData[i][1]));
+                ft.setRepetitions(Double.valueOf(factorData[i][2]));
+                ft.setMatch_100(Double.valueOf(factorData[i][3]));
+                ft.setMatch_95_99(Double.valueOf(factorData[i][4]));
+                ft.setMatch_85_94(Double.valueOf(factorData[i][5]));
+                ft.setMatch_75_84(Double.valueOf(factorData[i][6]));
+                ft.setMatch_50_74(Double.valueOf(factorData[i][7]));
+                ft.setMatch_new(Double.valueOf(factorData[i][8]));
+                factorTemplateList.add(ft);
+            }
+        }
+
+        for(int i = 2; i< custFactorData.length; i++){
+            if(StringUtils.isNotEmpty(custFactorData[i][0])){
+                FactorTemplate ft=new FactorTemplate();
+                ft.setCustomerName(custFactorData[i][0]);
+                ft.setContextMatch(Double.valueOf(custFactorData[i][1]));
+                ft.setRepetitions(Double.valueOf(custFactorData[i][2]));
+                ft.setMatch_100(Double.valueOf(custFactorData[i][3]));
+                ft.setMatch_95_99(Double.valueOf(custFactorData[i][4]));
+                ft.setMatch_85_94(Double.valueOf(custFactorData[i][5]));
+                ft.setMatch_75_84(Double.valueOf(custFactorData[i][6]));
+                ft.setMatch_50_74(Double.valueOf(custFactorData[i][7]));
+                ft.setMatch_new(Double.valueOf(custFactorData[i][8]));
+                factorTemplateList.add(ft);
+            }
+        }
+
+        //折算比例 start
+        comboBox = new JComboBox<FactorTemplate>();
+        for (FactorTemplate template : factorTemplateList) {
+            comboBox.addItem(template);
+        }
+
+
+        comboBox.setPreferredSize(new Dimension(200, 30));
+        comboBox.setMaximumSize(new Dimension(200, 30));
+
+//        comboBox.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+////                JOptionPane.showMessageDialog(App.statusPanel, "选中：" + comboBox.getSelectedItem(), PropertyUtil.getProperty("ds.ui.tips"),
+////                        JOptionPane.CLOSED_OPTION);
+////                panelDown.revalidate();
+//            }
+//        });
+
+        comboBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                Object selectedItem = e.getItem();
+                System.out.println("选择折算方案：" + selectedItem);
+                comboBox.setPopupVisible(false);
+                JOptionPane.showMessageDialog(App.statusPanel, "选择折算方案：" + comboBox.getSelectedItem(), PropertyUtil.getProperty("ds.ui.tips"),
+                        JOptionPane.CLOSED_OPTION);
+            }
+        });
+        //折算比例 end
 
         panelGrid2.add(buttonStartNow);
+        radioButtonPanel.setPreferredSize(new Dimension(250, 30));
+        radioButtonPanel.setMaximumSize(new Dimension(250, 30));
+
+        JLabel labelZheSuan=new JLabel("折算方案 ");
         panelDown.add(radioButtonPanel);
+        //折算比例 start
+        panelDown.add(labelZheSuan);
+        panelDown.add(comboBox);
+        //折算比例 end
         panelDown.add(panelGrid2);
         return panelDown;
     }
@@ -432,7 +529,7 @@ public class StatusPanel extends JPanel {
 
 
     public void addRadioButton(String name, final int size,JPanel panel) {
-        boolean selected=size==0;
+        boolean selected=size==1;
         JRadioButton radioButton = new JRadioButton(name, selected);
         radioButton.setBackground(Color.WHITE);
         buttonGroup.add(radioButton);
@@ -443,6 +540,11 @@ public class StatusPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
 //                JOptionPane.showMessageDialog(App.statusPanel, "当前选择："+size, PropertyUtil.getProperty("ds.ui.tips"),
 //                        JOptionPane.PLAIN_MESSAGE);
+                if (size == 0) {
+                    labelTitle.setText("Vivo Log 汇总");
+                }else if(size ==1 ){
+                    labelTitle.setText("Trados Log 汇总");
+                }
                 buttonSelectValue=size;
             }
         };
