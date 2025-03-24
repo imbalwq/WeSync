@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
+import javax.swing.*;
 import java.io.*;
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -44,7 +45,6 @@ public class LogReport {
 
         //TODO 读取模板文件并 写入到新的位置
         String templatePath= "C:\\Users\\Administrator\\Desktop\\test3\\vivoReportTemplate.xlsx";
-        System.out.println(templatePath);
         File reportTemplate = new File(templatePath);
         boolean isUseFileNameSuffix=false;
         generateQuotationSheet(reportTemplate,reportFolder,newFilePath,isUseFileNameSuffix);
@@ -70,7 +70,6 @@ public class LogReport {
                     .append("75% - 84%\t")
                     .append("50% - 74%\t")
                     .append("新字/AT\t");
-            System.out.println(title.toString());
 
             List<File> fileList= FileUtil.readyAllFiel(reportFolder,"xlsx");
             int i=0;
@@ -102,13 +101,11 @@ public class LogReport {
                             .append(vivoReportRowData.getMatching_75_84()).append("\t")
                             .append(vivoReportRowData.getMatching_50_74()).append("\t")
                             .append(vivoReportRowData.getMatching_New()).append("\t");
-                    System.out.println(rowDataStr.toString());
                     i++;
                     StatusPanel.progressCurrent.setValue(i);
                 }
             }
 
-            System.out.println("数据行数："+i);
             msg.append("读取trados报告【")
                     .append(fileList.size()).append("】个")
                     .append("解析的记录【").append(i).append("】条");
@@ -259,7 +256,6 @@ public class LogReport {
                     }
                     vivoReportRowData.setSdlxliffFileName(sdlfilename);
                     vivoReportRowData.setMatching_PerfectMatch(Integer.valueOf(words));
-                    System.out.println(words);
                 }
                 if("Context Match".equalsIgnoreCase(wordTypeValue) || "上下文匹配".equalsIgnoreCase(wordTypeValue)){
                     vivoReportRowData.setMatching_100locked(Integer.valueOf(words));
@@ -404,7 +400,6 @@ public class LogReport {
                         .append(vivoReportRowData.getMatching_75_84()).append("\t")
                         .append(vivoReportRowData.getMatching_50_74()).append("\t")
                         .append(vivoReportRowData.getMatching_New()).append("\t");
-                System.out.println(rowDataStr.toString());
 
 
                 XSSFCellStyle cellStyle=workbookTemp.createCellStyle();
@@ -447,10 +442,6 @@ public class LogReport {
             }
 //        }
 
-
-        System.out.println("数据行数："+i);
-
-
         //删除模板中的 示例数据 保留公式的行
         //TODO 一定要单独的在删除行的后边再写一行公式 ，否则通过下拉刷新的方式刷出的公式， 如果删除 原始公式行，excel 会提示丢失共享公式。
 //        sheetTemp.shiftRows(3, sheetTemp.getLastRowNum(), -1);
@@ -473,7 +464,9 @@ public class LogReport {
             excelFileOutPutStream = new FileOutputStream(newFolderPath);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            System.err.println(e.getMessage());
+            JOptionPane.showMessageDialog(App.statusPanel, "生成报告时异常:"+e.getMessage());
+            logger.error("生成报告时异常:"+e);
+            return "生成报告时异常:"+e.getMessage();
         }
         // 将最新的 Excel 文件写入到文件输出流中，更新文件信息！
         workbookTemp.write(excelFileOutPutStream);

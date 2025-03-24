@@ -61,5 +61,10 @@ public class ConstantsTools {
     /**
      * 日志文件 路径
      */
-    public final static String PATH_LOG = UiConsts.CURRENT_DIR + File.separator + "log" + File.separator + "log.log";
+    public final static String PATH_LOG = UiConsts.CURRENT_DIR + File.separator + "logs";
+
+    /**
+     * 自定义折算比例模板位置
+     */
+    public final static String PATH_CustFactorTemplate = UiConsts.CURRENT_DIR + File.separator + "config"+File.separator + "custFactorTemplate.xlsx";
 }

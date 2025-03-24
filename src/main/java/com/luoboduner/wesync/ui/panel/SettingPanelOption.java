@@ -226,7 +226,7 @@ public class SettingPanelOption extends JPanel {
 
         buttionClearLogs.addActionListener(e -> {
 
-            JOptionPane.showMessageDialog(App.settingPanel,"暂未启用log功能");
+            JOptionPane.showMessageDialog(App.settingPanel,"暂未启用log清空功能，可手动到详细日志目录下删除log");
                     if(true)return;
 
             int answer = JOptionPane.showConfirmDialog(App.settingPanel,

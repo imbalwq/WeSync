@@ -50,24 +50,18 @@ public class ExecuteThread extends Thread  {
         // 测试连接
         boolean isexception=false;
         try {
-            //="C:\\Users\\Administrator\\Desktop\\temp\\zhaoxiaoling\\vivo LogReport\\log";
             String tradosReportForder;
             String outputForder;
 
             tradosReportForder=StatusPanel.textFieldLogForder.getText().trim();
             outputForder=StatusPanel.textFieldLogForderOutput.getText().trim();
             boolean isUseFileNameSuffix=StatusPanel.buttonSelectValue==0?true:false;
-            System.out.println("tradosReportForder:"+tradosReportForder);
-            System.out.println("outputForder"+outputForder);
 
-            String msg=LogReport.extracted(tradosReportForder,outputForder);
+            String msg="";
             //TODO 测试 start
-//            String reportFolder="C:\\Users\\Administrator\\Desktop\\temp\\zhaoxiaoling\\vivo LogReport\\log";
-//            String newFolderPath="C:\\Users\\Administrator\\Desktop\\temp\\zhaoxiaoling\\vivo LogReport\\tmp\\vivo report.xlsx";
 
             //TODO 读取模板文件并 写入到新的位置
             String templatePath= UiConsts.CURRENT_DIR + File.separator + "config" + File.separator + "reportTemplate.xlsx";
-            System.out.println("templatePath:"+templatePath);
             File reportTemplate = new File(templatePath);
 
             Date now = new Date();
@@ -91,14 +85,13 @@ public class ExecuteThread extends Thread  {
         } catch (Exception e) {
             isexception=true;
             logger.error("线程运行中异常：",e);
+            JOptionPane.showMessageDialog(App.statusPanel, "报告汇总过程异常，可查[看详细日志]并联系工程部同事咨询！\n"+"错误信息概述："+e.getMessage());
             e.printStackTrace();
         }
 
         StatusPanel.buttonStartNow.setEnabled(true);
         StatusPanel.isRunning = false;
-        if(isexception){
-            JOptionPane.showMessageDialog(App.statusPanel, "报告汇总过程出现异常，可查看error.log并联系开发者咨询！");
-        }else{
+        if(!isexception){
             JOptionPane.showMessageDialog(App.statusPanel, "报告汇总完成！");
         }
 

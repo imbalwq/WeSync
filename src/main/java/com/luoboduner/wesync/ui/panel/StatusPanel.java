@@ -72,6 +72,8 @@ public class StatusPanel extends JPanel {
      */
 
     public static JComboBox<FactorTemplate> comboBox;
+    public static JLabel ftEdit;
+    public static JLabel ftReload;
 
     /**
      * 构造
@@ -332,7 +334,63 @@ public class StatusPanel extends JPanel {
         addRadioButton("常规Trados报告",1,radioButtonPanel);
         addRadioButton("Vivo线上报告",0,radioButtonPanel);
 
+        //折算比例 start
+        comboBox = new JComboBox<FactorTemplate>();
+        //加载下拉列表数据
+        reLoadComboBox();
 
+
+        comboBox.setPreferredSize(new Dimension(200, 30));
+        comboBox.setMaximumSize(new Dimension(200, 30));
+
+//        comboBox.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+////                JOptionPane.showMessageDialog(App.statusPanel, "选中：" + comboBox.getSelectedItem(), PropertyUtil.getProperty("ds.ui.tips"),
+////                        JOptionPane.CLOSED_OPTION);
+////                panelDown.revalidate();
+//            }
+//        });
+
+        comboBox.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                Object selectedItem = e.getItem();
+                //System.out.println("选择折算方案：" + selectedItem);
+                comboBox.setPopupVisible(false);
+                //JOptionPane.showMessageDialog(App.statusPanel, "选择折算方案：" + comboBox.getSelectedItem(), PropertyUtil.getProperty("ds.ui.tips"),
+                //        JOptionPane.CLOSED_OPTION);
+            }
+        });
+        //折算比例 end
+
+        panelGrid2.add(buttonStartNow);
+        radioButtonPanel.setPreferredSize(new Dimension(250, 30));
+        radioButtonPanel.setMaximumSize(new Dimension(250, 30));
+
+        JLabel labelZheSuan=new JLabel("折算方案 ");
+        panelDown.add(radioButtonPanel);
+        //折算比例 start
+        panelDown.add(labelZheSuan);
+        panelDown.add(comboBox);
+         ftEdit=new JLabel(" [编辑]");
+         ftReload=new JLabel(" [刷新]");
+
+        ftEdit.setForeground(UiConsts.TOOL_BAR_BACK_COLOR);
+        ftReload.setForeground(UiConsts.TOOL_BAR_BACK_COLOR);
+
+        panelDown.add(ftEdit);
+        panelDown.add(ftReload);
+        //折算比例 end
+        panelDown.add(panelGrid2);
+        return panelDown;
+    }
+
+    /**
+     * 重新加载 下拉框
+     */
+    private void reLoadComboBox() {
+        //刷新数据时 先清空
+        comboBox.removeAllItems();
         String factorTemplate= UiConsts.CURRENT_DIR + File.separator + "config" + File.separator + "factorTemplate.xlsx";
         String custFactorTemplate= UiConsts.CURRENT_DIR + File.separator + "config" + File.separator + "custFactorTemplate.xlsx";
 
@@ -380,49 +438,9 @@ public class StatusPanel extends JPanel {
                 factorTemplateList.add(ft);
             }
         }
-
-        //折算比例 start
-        comboBox = new JComboBox<FactorTemplate>();
         for (FactorTemplate template : factorTemplateList) {
             comboBox.addItem(template);
         }
-
-
-        comboBox.setPreferredSize(new Dimension(200, 30));
-        comboBox.setMaximumSize(new Dimension(200, 30));
-
-//        comboBox.addActionListener(new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-////                JOptionPane.showMessageDialog(App.statusPanel, "选中：" + comboBox.getSelectedItem(), PropertyUtil.getProperty("ds.ui.tips"),
-////                        JOptionPane.CLOSED_OPTION);
-////                panelDown.revalidate();
-//            }
-//        });
-
-        comboBox.addItemListener(e -> {
-            if (e.getStateChange() == ItemEvent.SELECTED) {
-                Object selectedItem = e.getItem();
-                System.out.println("选择折算方案：" + selectedItem);
-                comboBox.setPopupVisible(false);
-                JOptionPane.showMessageDialog(App.statusPanel, "选择折算方案：" + comboBox.getSelectedItem(), PropertyUtil.getProperty("ds.ui.tips"),
-                        JOptionPane.CLOSED_OPTION);
-            }
-        });
-        //折算比例 end
-
-        panelGrid2.add(buttonStartNow);
-        radioButtonPanel.setPreferredSize(new Dimension(250, 30));
-        radioButtonPanel.setMaximumSize(new Dimension(250, 30));
-
-        JLabel labelZheSuan=new JLabel("折算方案 ");
-        panelDown.add(radioButtonPanel);
-        //折算比例 start
-        panelDown.add(labelZheSuan);
-        panelDown.add(comboBox);
-        //折算比例 end
-        panelDown.add(panelGrid2);
-        return panelDown;
     }
 
     /**
@@ -500,8 +518,65 @@ public class StatusPanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
                 try {
-                    Desktop.getDesktop().open(new File(UiConsts.CURRENT_DIR + File.separator + "log"));
+                    Desktop.getDesktop().open(new File(ConstantsTools.PATH_LOG));
                 } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    logger.error(e1.toString());
+                }
+            }
+        });
+
+        //折算方案编辑按钮
+        ftEdit.addMouseListener(new MouseListener() {
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                ftEdit.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                try {
+                    Desktop.getDesktop().open(new File(ConstantsTools.PATH_CustFactorTemplate));
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    logger.error(e1.toString());
+                }
+            }
+        });
+
+        //折算方案 刷新按钮
+        ftReload.addMouseListener(new MouseListener() {
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                ftReload.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                try {
+                    //刷新下拉列表
+                    reLoadComboBox();
+                } catch (Exception e1) {
                     // TODO Auto-generated catch block
                     logger.error(e1.toString());
                 }
